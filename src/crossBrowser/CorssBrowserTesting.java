@@ -1,0 +1,107 @@
+package crossBrowser;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+
+import org.apache.poi.EncryptedDocumentException;
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.firefox.FirefoxDriver;
+import org.openqa.selenium.firefox.FirefoxOptions;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
+import commonMethods.CommonMethods;
+
+public class CorssBrowserTesting {
+	@Parameters("browserName")
+	@Test
+  public void cbTest(String bname) throws InterruptedException, EncryptedDocumentException, IOException 
+  {
+	//using chrome Options for disabling notifications
+	  WebDriver driver = null;
+	
+		
+	  if(bname.equals("chrome"))
+	  {
+		  ChromeOptions opt= new ChromeOptions();
+		  opt.addArguments("--disable-notifications");
+		  driver= new ChromeDriver(opt);
+	  }
+	  
+	  else if (bname.equals("fireFox")) 
+	  {
+//		  FirefoxOptions opt= new FirefoxOptions();
+//		  opt.addArguments("--disable-notifications");
+		  driver= new FirefoxDriver();
+		
+	}
+	 
+		
+		driver.manage().window().maximize();
+		driver.get("https://www.policybazaar.com/");
+		
+		CommonMethods.implicitWait(driver, 900);
+		
+		//click on signIn Button
+		driver.findElement(By.xpath("//a[text()='Sign in']")).click();
+		
+		Thread.sleep(1000);
+		//enter mobile num
+		String userID = CommonMethods.readDataFromExcel(1, 0);
+		driver.findElement(By.xpath("(//input[@type='number'])[2]")).sendKeys(userID);
+		
+
+		//click on Sign In with password
+		driver.findElement(By.xpath("(//span[text()='Sign in with Password'])[2]")).click();
+	
+		Thread.sleep(1000);
+		// enter password
+		driver.findElement(By.name("password")).sendKeys(CommonMethods.readDataFromExcel(1, 1));
+
+		//click on signInButton
+		driver.findElement(By.xpath("//span[text()='Sign in']")).click();
+		CommonMethods.implicitWait(driver, 1000);
+		
+		//now we are on home page
+		// move o myAccount
+		Thread.sleep(500);
+		driver.findElement(By.xpath("//div[text()='My Account']")).click();
+		Thread.sleep(1000);
+		//click on my profile
+		driver.findElement(By.xpath("//span[text()=' My profile ']")).click();
+		//new window will be opened, we need to switch focus to new window
+		Set<String> allId = driver.getWindowHandles();
+		//convert set to list
+		List<String>l= new ArrayList<>(allId);
+		
+		String mainPageID = l.get(0);// main page ID
+		String childPageID = l.get(1);//child page ID
+
+		//switch to child page id
+		
+		driver.switchTo().window(childPageID);
+		
+		Thread.sleep(1000);
+		
+		String expResult = CommonMethods.readDataFromExcel(1, 2);
+
+		String actualResult = driver.findElement(By.xpath("//div[@class='textCapitalize sc-ckVGcZ kWpXlQ']")).getText();
+		
+		if(expResult.equals(actualResult))
+		{
+			System.out.println("Actual and expected results are matching TC is Passed");
+		}
+	else 
+		{
+			System.out.println("Actual and expected results are not-matching TC is Failed");
+		}
+		
+		driver.quit();
+	 
+  }
+}
